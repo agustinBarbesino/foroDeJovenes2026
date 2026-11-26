@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "pretest": "DATABASE_URL=file:./test.db prisma db push --skip-generate --accept-data-loss",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "db:push": "prisma db push",
