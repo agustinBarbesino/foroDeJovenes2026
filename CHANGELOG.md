@@ -29,3 +29,10 @@ Todos los cambios notables se documentan acá. El formato sigue [Keep a Changelo
 
 - Panel docente protegido con contraseña, tablas por propuesta y curso, métricas de equidad y exportación CSV.
 - Botón de sincronización manual con indicador de estado (integración de Sheets en el siguiente hito).
+
+### Added
+
+- Módulo de Google Sheets con service account, hojas `Resumen`, por propuesta, `Inscripciones` y `Métricas`, nombres sanitizados y sincronización idempotente con un reintento.
+- Sync automática con debounce de 30 s, sin bloquear la inscripción cuando falla.
+- Tests mockeados del payload y de la sincronización (5 casos).
+- Guía de configuración, estructura y troubleshooting de Google Sheets en el README.

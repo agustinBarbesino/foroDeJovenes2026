@@ -52,6 +52,54 @@ El motor vive en `src/lib/equity.ts` y es una función pura: recibe el estado (g
 
 Los parámetros `proposalCount`, `choicesPerStudent`, `groupsPerProposal`, `baseSlotCapacity` y `metricsMinCell` están en `src/lib/config.ts` y pueden sobreescribirse desde la tabla `Setting`.
 
+## Google Sheets
+
+### Configuración
+
+1. En Google Cloud, creá (o elegí) un proyecto y habilitá **Google Sheets API**.
+2. Creá un **service account** y descargá su JSON. No lo commitees: se excluye con `.gitignore`.
+3. Compartí el spreadsheet con el correo del service account (`...iam.gserviceaccount.com`) con permiso de **Editor**.
+4. Copiá `.env.example` a `.env` y completá:
+
+```env
+GOOGLE_SERVICE_ACCOUNT_EMAIL="cuenta@proyecto.iam.gserviceaccount.com"
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_SHEETS_SPREADSHEET_ID="id_del_spreadsheet"
+GOOGLE_SHEETS_AUTO_SYNC="true"
+```
+
+La clave privada va entre comillas dobles con los saltos de línea como `\n` literales.
+
+### Estructura del spreadsheet
+
+- **`Resumen`**: total de inscriptos, participaciones, propuestas activas y estado de cada propuesta.
+- **Una hoja por propuesta**: nombre sanitizado (≤31 caracteres, sin `/ \ ? * [ ]`), con un bloque de conteo agregado por género y las columnas `Grupo`, `Año`, `Curso`, `Nombre`, `Apellido`, `Nombre elegido`. **No incluye género individual**.
+- **`Inscripciones`**: `Nombre`, `Apellido`, `Nombre elegido`, `Curso`, `Año`, `Género`, `Propuesta`, `Grupo`.
+- **`Métricas`**: agregado por propuesta × grupo × año × curso × género, sin datos personales; las celdas con menos de `METRICS_MIN_CELL` casos se muestran como `<3` para evitar re-identificación.
+
+### Sync
+
+El botón "Sincronizar con Google Sheets" del panel docente fuerza una sync. Si `GOOGLE_SHEETS_AUTO_SYNC=true`, cada inscripción programa una sync con **debounce de 30 s**. La escritura es idempotente: se aseguran las hojas, se limpia cada rango y se vuelve a cargar. Ante un error se reintenta una vez y queda registrado en `SyncStatus`, visible en el panel. **Si Sheets falla o no está configurado, la inscripción no se bloquea.**
+
+> En un proceso Node largo (`next start`) el debounce funciona con `setTimeout`. En despliegues serverless conviene reemplazarlo por un cron que llame a `POST /api/docentes/sync`.
+
+### Troubleshooting
+
+| Síntoma | Causa probable |
+| --- | --- |
+| Estado `not_configured` | Faltan variables de Google en `.env` |
+| `403 Forbidden` | El spreadsheet no está compartido con el service account como Editor |
+| `404 Not found` | `GOOGLE_SHEETS_SPREADSHEET_ID` incorrecto |
+| `invalid_grant` | Clave privada mal pegada: revisá los `\n` y las comillas |
+| Estado `error` en el panel | Revisá `lastError` y los logs del servidor; se reintentó una vez |
+
 ## Tratamiento de datos de género
 
-El género individual se muestra en el panel docente protegido por contraseña. En Google Sheets las hojas por propuesta incluyen **solo agregados** por género; `Métricas` aplica supresión de celdas con pocos casos para evitar re-identificación (detalle en el README final).
+El campo se llama **Género**, es obligatorio y tiene exactamente cuatro opciones: `Femenino`, `Masculino`, `No binario` y `Prefiero no decir`. No hay un campo libre "Otro", no se infería género a partir del nombre legal y el nombre autopercibido es opcional y nunca reemplaza al nombre legal.
+
+- **Panel docente (protegido)**: muestra el género individual y el nombre elegido.
+- **Hojas por propuesta en Sheets**: solo agregados por género; no hay columna individual.
+- **`Inscripciones` en Sheets**: conserva `Género` con las cuatro etiquetas exactas, porque es la trazabilidad plana acordada. Su acceso debe estar restringido a quien administra el spreadsheet.
+- **`Métricas`**: solo agregados, con supresión de celdas con menos de 3 casos.
+
+Esta decisión reduce las copias del dato sensible sin perder la auditoría: el detalle vivo está en la base de datos y en el panel, no se replica en 14 hojas.
