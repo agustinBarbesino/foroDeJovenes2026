@@ -18,3 +18,9 @@ Todos los cambios notables se documentan acá. El formato sigue [Keep a Changelo
 
 - Motor puro de equidad con restricciones duras por año/curso, balance F/M proporcional, distribución de personas no binaries y overflow de capacidad.
 - Carga del estado desde Prisma y tests unitarios del motor (8 casos).
+
+### Added
+
+- Formulario público de inscripción con propuestas disponibles por perfil y selección de 3 opciones.
+- API de inscripción transaccional con revalidación de cupos, duplicados y alternativas ante carreras.
+- Tests de integración de inscripción atómica y validación Zod (4 casos).

@@ -30,6 +30,12 @@ La aplicación queda en `http://localhost:3000` y el panel docente en `http://lo
 | `npm test` | Tests unitarios |
 | `npm run seed` | Cargar datos iniciales |
 
+## Formulario de inscripción
+
+La ruta `/` es pública: se cargan nombre, apellido, curso, género y nombre autopercibido opcional. Después se muestran las propuestas con lugar para ese perfil y se eligen exactamente 3.
+
+La confirmación (`POST /api/inscripciones`) valida todo con Zod, revalida los cupos **dentro de una transacción** y crea las 3 inscripciones juntas. Si una propuesta se completó en el medio, no se crea nada: se devuelve el aviso y las alternativas, y el formulario conserva los datos ya cargados.
+
 ## Algoritmo de equidad
 
 El motor vive en `src/lib/equity.ts` y es una función pura: recibe el estado (grupos, inscripciones, tamaño y composición de cada curso) y devuelve decisiones. La misma función calcula las propuestas disponibles y elige el grupo al confirmar, así que no puede haber diferencia entre "se mostró" y "se asignó".
