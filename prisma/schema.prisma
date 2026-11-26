@@ -1,0 +1,84 @@
+// Modelo de datos del Foro de Jóvenes.
+// Los slots (año + curso + grupo) NO se persisten: se derivan de Enrollment
+// para evitar estados inconsistentes entre cupo e inscripción.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite no soporta enums nativos. Se usa String con validación Zod en la capa
+// de aplicación; estos valores son las únicas etiquetas válidas.
+// Femenino | Masculino | No binario | Prefiero no decir
+
+model Course {
+  id       String    @id // Nomenclatura exacta: 1°A ... 7°IP
+  year     Int
+  label    String // A, B, MMO o IP
+  students Student[]
+}
+
+model Student {
+  id            Int         @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  nameKey       String      @unique // nombre|apellido|curso en minúsculas, para detectar duplicados
+  preferredName String?
+  gender        String
+  courseId      String
+  createdAt     DateTime    @default(now())
+  course        Course      @relation(fields: [courseId], references: [id])
+  enrollments   Enrollment[]
+
+  @@index([courseId])
+}
+
+model Proposal {
+  id          Int      @id
+  title       String   @unique
+  description String
+  active      Boolean  @default(true)
+  groups      Group[]
+}
+
+model Group {
+  id         Int         @id @default(autoincrement())
+  proposalId Int
+  index      Int // 1, 2 o 3
+  proposal   Proposal    @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+
+  @@unique([proposalId, index])
+}
+
+model Enrollment {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  proposalId Int
+  groupId    Int
+  createdAt  DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  // Un estudiante elige cada propuesta una sola vez.
+  @@unique([studentId, proposalId])
+  @@index([groupId])
+}
+
+// Parámetros ajustables sin tocar código.
+model Setting {
+  key   String @id
+  value String // JSON serializado
+}
+
+// Estado de la última sincronización con Google Sheets.
+model SyncStatus {
+  id         Int       @id @default(1)
+  status     String    @default("never") // never | ok | error | not_configured | syncing
+  lastSyncAt DateTime?
+  lastError  String?
+}
