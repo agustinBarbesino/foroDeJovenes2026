@@ -24,3 +24,8 @@ Todos los cambios notables se documentan acá. El formato sigue [Keep a Changelo
 - Formulario público de inscripción con propuestas disponibles por perfil y selección de 3 opciones.
 - API de inscripción transaccional con revalidación de cupos, duplicados y alternativas ante carreras.
 - Tests de integración de inscripción atómica y validación Zod (4 casos).
+
+### Added
+
+- Panel docente protegido con contraseña, tablas por propuesta y curso, métricas de equidad y exportación CSV.
+- Botón de sincronización manual con indicador de estado (integración de Sheets en el siguiente hito).
