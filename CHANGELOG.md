@@ -8,3 +8,8 @@ Todos los cambios notables se documentan acá. El formato sigue [Keep a Changelo
 
 - Scaffold inicial: Next.js + TypeScript + Tailwind, Prisma/SQLite, Vitest, ESLint.
 - `.gitignore` y `.env.example` con exclusión de secretos y credenciales de Google.
+
+### Added
+
+- Schema de Prisma con cursos, estudiantes, propuestas, grupos, inscripciones y estado de sincronización.
+- Seed determinista con 12 cursos, 14 propuestas, 337 estudiantes y casos de desbalance de género.

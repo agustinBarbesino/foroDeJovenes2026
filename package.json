@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "db:push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
-    "setup": "prisma db push && npm run seed"
+    "setup": "prisma db push && npm run seed",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
