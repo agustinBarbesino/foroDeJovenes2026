@@ -36,3 +36,8 @@ Todos los cambios notables se documentan acá. El formato sigue [Keep a Changelo
 - Sync automática con debounce de 30 s, sin bloquear la inscripción cuando falla.
 - Tests mockeados del payload y de la sincronización (5 casos).
 - Guía de configuración, estructura y troubleshooting de Google Sheets en el README.
+
+### Added
+
+- README final con instalación, variables, seed, algoritmo y fórmulas, panel docente, Sheets, privacidad de género y flujo de contribución.
+- Override de parámetros del motor desde variables de entorno.
