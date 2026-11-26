@@ -48,6 +48,8 @@ export const YEAR_BY_COURSE: Record<string, Year> = Object.fromEntries(
 );
 
 export interface EquityConfig {
+  /** Cantidad de propuestas del evento. */
+  proposalCount: number;
   /** Cantidad de propuestas que elige cada estudiante. */
   choicesPerStudent: number;
   /** Grupos por propuesta. */
@@ -59,6 +61,7 @@ export interface EquityConfig {
 }
 
 export const DEFAULT_EQUITY_CONFIG: EquityConfig = {
+  proposalCount: 14,
   choicesPerStudent: 3,
   groupsPerProposal: 3,
   baseSlotCapacity: 2,
