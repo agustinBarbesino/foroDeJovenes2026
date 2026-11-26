@@ -9,9 +9,11 @@ import {
   obtenerMetricas,
   obtenerPorCurso,
   obtenerPorPropuesta,
+  type FilaPropuesta,
 } from "@/lib/docentes-data";
 import { prisma } from "@/lib/db";
 import { FiltroSelect, LogoutButton, SyncControls } from "@/components/panel-controls";
+import { TablaInscripciones } from "@/components/tabla-inscripciones";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -91,11 +93,15 @@ export default async function PanelDocentes({
   let encabezados: string[] = [];
   let filas: Array<Array<string | number | null>> = [];
   let exportUrl = "";
+  let datosPropuesta: FilaPropuesta[] = [];
+  let tituloPropuesta = `Propuesta ${propuestaId}`;
 
   if (view === "propuesta") {
-    const datos = await obtenerPorPropuesta(propuestaId);
+    datosPropuesta = await obtenerPorPropuesta(propuestaId);
+    tituloPropuesta =
+      propuestas.find((p) => p.id === propuestaId)?.title ?? tituloPropuesta;
     encabezados = ["Grupo", "Nombre", "Apellido", "Nombre elegido", "Curso", "Año", "Género"];
-    filas = datos.map((f) => [f.grupo, f.nombre, f.apellido, f.nombreElegido, f.curso, f.anio, f.genero]);
+    filas = datosPropuesta.map((f) => [f.grupo, f.nombre, f.apellido, f.nombreElegido, f.curso, f.anio, f.genero]);
     exportUrl = `/api/docentes/export?view=propuesta&propuestaId=${propuestaId}`;
   } else if (view === "curso") {
     const datos = await obtenerPorCurso(curso);
@@ -121,7 +127,7 @@ export default async function PanelDocentes({
         <div>
           <h1 className="text-2xl font-bold">Panel docente</h1>
           <p className="text-sm text-muted-foreground">
-            Solo lectura. Podés exportar cada tabla y sincronizar con Google Sheets.
+            Podés exportar y sincronizar con Google Sheets, y eliminar inscripciones de la propuesta que estés viendo.
           </p>
         </div>
         <LogoutButton />
@@ -179,7 +185,15 @@ export default async function PanelDocentes({
         </a>
       </div>
 
-      <Tabla encabezados={encabezados} filas={filas} />
+      {view === "propuesta" ? (
+        <TablaInscripciones
+          propuestaId={propuestaId}
+          titulo={tituloPropuesta}
+          filas={datosPropuesta}
+        />
+      ) : (
+        <Tabla encabezados={encabezados} filas={filas} />
+      )}
     </main>
   );
 }

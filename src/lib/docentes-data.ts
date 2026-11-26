@@ -2,6 +2,7 @@ import { prisma } from "./db";
 import { YEAR_BY_COURSE, YEARS, GENDERS } from "./config";
 
 export interface FilaPropuesta {
+  inscripcionId: number;
   propuestaId: number;
   titulo: string;
   grupo: number;
@@ -55,6 +56,7 @@ export async function obtenerPorPropuesta(propuestaId?: number): Promise<FilaPro
   });
 
   return enrollments.map((enrollment) => ({
+    inscripcionId: enrollment.id,
     propuestaId: enrollment.proposalId,
     titulo: enrollment.group.proposal.title,
     grupo: enrollment.group.index,

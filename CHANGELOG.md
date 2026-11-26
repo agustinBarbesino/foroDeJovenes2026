@@ -41,3 +41,9 @@ Todos los cambios notables se documentan acá. El formato sigue [Keep a Changelo
 
 - README final con instalación, variables, seed, algoritmo y fórmulas, panel docente, Sheets, privacidad de género y flujo de contribución.
 - Override de parámetros del motor desde variables de entorno.
+
+### Added
+
+- Eliminación de inscripciones desde el panel docente: una fila o toda la tabla de la propuesta filtrada, con confirmación en la UI y endpoints `DELETE` protegidos por la cookie docente.
+- Los borrados conservan al estudiante con sus otras inscripciones y reprograman la sync con Google Sheets sin bloquear la respuesta.
+- Tests de integración del borrado individual y masivo, y tests de autorización, validación y reprogramación de sync en las rutas (8 casos nuevos).

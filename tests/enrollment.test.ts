@@ -2,6 +2,10 @@ import { execFileSync } from "node:child_process";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/lib/db";
 import { inscribir } from "../src/lib/enrollment";
+import {
+  eliminarInscripcion,
+  eliminarInscripcionesDePropuesta,
+} from "../src/lib/eliminar-inscripciones";
 import { buildNameKey, inscripcionSchema, type InscripcionInput } from "../src/lib/validation";
 
 const environment = {
@@ -105,5 +109,85 @@ describe("inscripción atómica", () => {
         where: { nameKey: buildNameKey("Otra", "Persona", "1°A") },
       }),
     ).toBeNull();
+  });
+});
+
+describe("eliminación de inscripciones", () => {
+  it("borra una inscripción y conserva al estudiante con sus otras dos", async () => {
+    const inscripcion = await inscribir({
+      ...input,
+      nombre: "Borrar",
+      apellido: "Uno",
+      propuestas: [4, 5, 6],
+    });
+    expect(inscripcion.ok).toBe(true);
+
+    const estudiante = await prisma.student.findUnique({
+      where: { nameKey: buildNameKey("Borrar", "Uno", "1°A") },
+    });
+    expect(estudiante).not.toBeNull();
+
+    const filas = await prisma.enrollment.findMany({
+      where: { studentId: estudiante!.id },
+    });
+    expect(filas).toHaveLength(3);
+
+    const objetivo = filas.find((fila) => fila.proposalId === 4)!;
+    expect(await eliminarInscripcion(objetivo.id)).toEqual({
+      ok: true,
+      eliminadas: 1,
+    });
+    expect(
+      await prisma.enrollment.findUnique({ where: { id: objetivo.id } }),
+    ).toBeNull();
+    expect(
+      await prisma.enrollment.count({ where: { studentId: estudiante!.id } }),
+    ).toBe(2);
+    expect(
+      await prisma.student.findUnique({ where: { id: estudiante!.id } }),
+    ).not.toBeNull();
+  });
+
+  it("borra toda la tabla de una propuesta sin tocar las otras", async () => {
+    const inscripcion = await inscribir({
+      ...input,
+      nombre: "Borrar",
+      apellido: "Todo",
+      propuestas: [7, 8, 9],
+    });
+    expect(inscripcion.ok).toBe(true);
+
+    const estudiante = await prisma.student.findUnique({
+      where: { nameKey: buildNameKey("Borrar", "Todo", "1°A") },
+    });
+    expect(
+      await prisma.enrollment.count({ where: { proposalId: 9 } }),
+    ).toBeGreaterThan(0);
+
+    const eliminadas = await eliminarInscripcionesDePropuesta(9);
+    expect(eliminadas.ok).toBe(true);
+    expect(await prisma.enrollment.count({ where: { proposalId: 9 } })).toBe(0);
+    expect(
+      await prisma.enrollment.count({ where: { studentId: estudiante!.id } }),
+    ).toBe(2);
+  });
+
+  it("avisa cuando no existe la fila o el identificador es inválido", async () => {
+    expect(await eliminarInscripcion(999_999)).toMatchObject({
+      ok: false,
+      code: "not_found",
+    });
+    expect(await eliminarInscripcionesDePropuesta(999_999)).toMatchObject({
+      ok: false,
+      code: "not_found",
+    });
+    expect(await eliminarInscripcion(-1)).toMatchObject({
+      ok: false,
+      code: "invalid",
+    });
+    expect(await eliminarInscripcionesDePropuesta(Number.NaN)).toMatchObject({
+      ok: false,
+      code: "invalid",
+    });
   });
 });

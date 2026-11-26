@@ -58,7 +58,7 @@ Los parámetros también pueden cambiarse en la fila `equityConfig` de la tabla 
 | `npm run build` / `npm start` | Build y servidor de producción |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript (`tsc --noEmit`) |
-| `npm test` | 19 tests con Vitest (usa `prisma/test.db`, aislado) |
+| `npm test` | 27 tests con Vitest (usa `prisma/test.db`, aislado) |
 | `npm run db:push` | Sincronizar el schema con la base |
 | `npm run seed` | Recargar datos iniciales |
 | `npm run setup` | `db:push` + `seed` |
@@ -80,12 +80,12 @@ La confirmación (`POST /api/inscripciones`) valida todo con Zod, revalida los c
 
 ## Panel docente
 
-Ruta `/docentes`, protegida con `TEACHER_PASSWORD` mediante una cookie httpOnly con token HMAC (la contraseña nunca viaja en la cookie). Es solo lectura:
+Ruta `/docentes`, protegida con `TEACHER_PASSWORD` mediante una cookie httpOnly con token HMAC (la contraseña nunca viaja en la cookie). El formulario público no puede borrar nada; las acciones destructivas viven acá:
 
-- **Por propuesta**: 3 grupos con nombre, apellido, nombre elegido, curso, año, género y grupo.
-- **Por curso**: estudiantes del curso con sus 3 propuestas y grupos.
-- **Métricas de equidad**: agregado por propuesta × grupo × año × curso × género (4 categorías).
+- **Por propuesta**: 3 grupos con nombre, apellido, nombre elegido, curso, año, género y grupo. Cada fila tiene un botón para eliminar esa inscripción y hay un botón "Eliminar toda la tabla" que vacía solo la propuesta filtrada. Ambos piden confirmación. Al borrar una fila, el estudiante conserva sus otras inscripciones; si era la última, sigue cargado en la base.
+- **Por curso** y **Métricas de equidad**: vistas de solo lectura (estudiantes con sus 3 propuestas y grupos; agregado por propuesta × grupo × año × curso × género con 4 categorías).
 - Exportación CSV de cada tabla (con BOM para Excel) y botón "Sincronizar con Google Sheets" con el estado de la última sync.
+- Todo borrado exitoso reprograma la sync automática con el mismo debounce de 30 s que el alta. Si Sheets falla, la eliminación ya fue respondida y no se bloquea.
 
 ## Algoritmo de equidad
 
@@ -137,7 +137,7 @@ La clave privada va entre comillas dobles con los saltos de línea como `\n` lit
 
 ### Sync
 
-El botón "Sincronizar con Google Sheets" del panel docente fuerza una sync. Si `GOOGLE_SHEETS_AUTO_SYNC=true`, cada inscripción programa una sync con **debounce de 30 s**. La escritura es idempotente: se aseguran las hojas, se limpia cada rango y se vuelve a cargar (`values.clear` + `values.update`). Ante un error se reintenta una vez y queda registrado en `SyncStatus`, visible en el panel. **Si Sheets falla o no está configurado, la inscripción no se bloquea.**
+El botón "Sincronizar con Google Sheets" del panel docente fuerza una sync. Si `GOOGLE_SHEETS_AUTO_SYNC=true`, cada inscripción o borrado programa una sync con **debounce de 30 s**. La escritura es idempotente: se aseguran las hojas, se limpia cada rango y se vuelve a cargar (`values.clear` + `values.update`). Ante un error se reintenta una vez y queda registrado en `SyncStatus`, visible en el panel. **Si Sheets falla o no está configurado, la inscripción no se bloquea.**
 
 > En un proceso Node largo (`next start`) el debounce funciona con `setTimeout`. En despliegues serverless conviene reemplazarlo por un cron que llame a `POST /api/docentes/sync`.
 
@@ -174,4 +174,4 @@ El repositorio es <https://github.com/agustinBarbesino/foroDeJovenes2026>. El fl
 5. Actualizar `README.md` y `CHANGELOG.md` en cada PR relevante.
 6. Nunca commitear `.env`, JSON de service account, `node_modules/`, `dist/` ni `.next/` (ver `.gitignore`).
 
-Historial de hitos: `chore/setup-inicial` → `feat/modelo-datos-y-seed` → `feat/motor-asignacion` → `feat/formulario-inscripcion` → `feat/panel-docentes` → `feat/integracion-sheets` → `docs/readme-final`.
+Historial de hitos: `chore/setup-inicial` → `feat/modelo-datos-y-seed` → `feat/motor-asignacion` → `feat/formulario-inscripcion` → `feat/panel-docentes` → `feat/integracion-sheets` → `docs/readme-final` → `feat/eliminar-inscripciones`.
