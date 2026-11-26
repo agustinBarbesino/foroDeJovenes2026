@@ -36,6 +36,10 @@ La ruta `/` es pública: se cargan nombre, apellido, curso, género y nombre aut
 
 La confirmación (`POST /api/inscripciones`) valida todo con Zod, revalida los cupos **dentro de una transacción** y crea las 3 inscripciones juntas. Si una propuesta se completó en el medio, no se crea nada: se devuelve el aviso y las alternativas, y el formulario conserva los datos ya cargados.
 
+## Panel docente
+
+La ruta es `/docentes` y la contraseña se define en `TEACHER_PASSWORD` (ver `.env.example`). Es solo lectura: permite ver las tablas por propuesta y por curso, las métricas con las 4 categorías de género, exportar CSV y sincronizar con Google Sheets.
+
 ## Algoritmo de equidad
 
 El motor vive en `src/lib/equity.ts` y es una función pura: recibe el estado (grupos, inscripciones, tamaño y composición de cada curso) y devuelve decisiones. La misma función calcula las propuestas disponibles y elige el grupo al confirmar, así que no puede haber diferencia entre "se mostró" y "se asignó".
